@@ -30,6 +30,7 @@ model User {
   memberships Membership[]
   guesses     Guess[]
   leaguesOwned League[]     @relation("LeagueOwner")
+  feedback    Feedback[]
 }
 
 model Account {
@@ -117,6 +118,22 @@ model Game {
 
   @@index([tipoffAt])
   @@index([status])
+}
+
+// User-submitted bug reports / inquiries. Admins triage at /admin/feedback.
+model Feedback {
+  id         String    @id @default(cuid())
+  userId     String?
+  user       User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  category   String    @default("other")   // bug | inquiry | feature | other
+  subject    String?
+  message    String
+  status     String    @default("open")    // open | resolved
+  adminNote  String?
+  createdAt  DateTime  @default(now())
+  resolvedAt DateTime?
+
+  @@index([status, createdAt])
 }
 
 model Guess {
