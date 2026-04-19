@@ -1,0 +1,16 @@
+node_modules
+.next
+out
+dist
+*.log
+.env
+.env.local
+.env.*.local
+!.env.example
+# local sqlite
+prisma/dev.db
+prisma/dev.db-journal
+# editor
+.vscode
+.idea
+.DS_Store
