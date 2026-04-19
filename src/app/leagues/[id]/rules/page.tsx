@@ -20,6 +20,21 @@ export default async function RulesPage({
   const league = await prisma.league.findUnique({ where: { id } });
   if (!league) notFound();
 
+  // Private leagues: only members can view the rules. Global: everyone's a member.
+  const member = await prisma.membership.findUnique({
+    where: { userId_leagueId: { userId, leagueId: id } },
+  });
+  if (!member) {
+    return (
+      <div className="card max-w-md mx-auto mt-10">
+        <h1 className="font-display text-xl font-bold">Not a member</h1>
+        <p className="text-white/60 mt-1 text-sm">
+          This is a private league. Ask the owner for the invite code.
+        </p>
+      </div>
+    );
+  }
+
   const isOwner = league.ownerId === userId && !league.isGlobal;
   const locked = areRulesLocked();
 

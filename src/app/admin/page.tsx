@@ -31,6 +31,8 @@ export default async function AdminPage() {
     finalGames,
     recentUsers,
     topLeagues,
+    openFeedback,
+    resolvedFeedback,
   ] = await Promise.all([
     prisma.user.count(),
     prisma.league.count(),
@@ -50,15 +52,22 @@ export default async function AdminPage() {
       take: 10,
       include: { _count: { select: { memberships: true } }, owner: { select: { name: true, email: true } } },
     }),
+    prisma.feedback.count({ where: { status: "open" } }),
+    prisma.feedback.count({ where: { status: "resolved" } }),
   ]);
   const totalUsers = totalUsersRaw - 1; // exclude The Monkey
   const monkey = await prisma.user.findUnique({ where: { id: MONKEY_USER_ID } });
 
   return (
     <div className="grid gap-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <h1 className="font-display text-3xl font-bold">Admin</h1>
-        <div className="text-xs text-white/50">signed in as {email}</div>
+        <div className="flex items-center gap-3">
+          <Link href="/admin/feedback" className="btn btn-ghost text-sm">
+            Feedback{openFeedback > 0 ? ` (${openFeedback} open)` : ""}
+          </Link>
+          <div className="text-xs text-white/50">signed in as {email}</div>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -70,6 +79,8 @@ export default async function AdminPage() {
         <Stat label="Live now" value={liveGames} accent />
         <Stat label="Final" value={finalGames} />
         <Stat label="Monkey present" value={monkey ? "yes" : "no"} />
+        <Stat label="Open feedback" value={openFeedback} accent={openFeedback > 0} />
+        <Stat label="Resolved feedback" value={resolvedFeedback} />
       </div>
 
       <section className="card">
