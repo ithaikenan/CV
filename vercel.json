@@ -1,5 +1,6 @@
 {
+  "_comment": "Vercel Hobby tier only allows daily crons. We pull the schedule once a day here, and use cron-job.org (free, every 1 min) to hit /api/cron/sync during live games. Upgrade to Pro to do everything from Vercel.",
   "crons": [
-    { "path": "/api/cron/sync", "schedule": "*/1 * * * *" }
+    { "path": "/api/cron/sync", "schedule": "0 12 * * *" }
   ]
 }

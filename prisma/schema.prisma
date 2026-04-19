@@ -6,8 +6,11 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  // Vercel + Neon pattern: pooled URL for runtime, direct URL for migrations.
+  // When you attach Vercel Postgres these two env vars are set automatically.
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
 }
 
 // --- Auth.js / NextAuth ---------------------------------------------------

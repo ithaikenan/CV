@@ -5,7 +5,7 @@ with your friends, and try to finish ahead of the Monkey.
 
 - **Domain:** playoffmonkey.com
 - **Stack:** Next.js 15 (App Router) · TypeScript · Tailwind · NextAuth v5
-  (Google + Facebook) · Prisma · SQLite (dev) / Postgres (prod)
+  (Google + Facebook) · Prisma · Postgres (Vercel + Neon)
 - **Theme:** dark blue + banana yellow accent.
 
 ## Feature checklist
