@@ -11,38 +11,34 @@ with your friends, and try to finish ahead of the Monkey.
 ## Feature checklist
 
 1. Dark-blue "Playoff Monkey" theme at `tailwind.config.ts` / `globals.css`.
-2. Google + Facebook OAuth via NextAuth v5; session cookie is httpOnly +
-   90-day `maxAge`, refreshed on each request, so returning users don't re-auth
-   on the same device (`src/auth.ts`).
-3. Every user is auto-enrolled in the Global League on first sign-in (see
+2. **Auth options** (NextAuth v5, JWT 90-day httpOnly cookie refreshed on each
+   request, returning users stay signed in on the same device — `src/auth.ts`):
+   - Google OAuth
+   - Email + password (Credentials provider; bcrypt hashes — `/signup`, `/signin`)
+3. **Tutorial** at `/about` explaining the "you're never out" angle, trial
+   week, scoring, Monkey, leagues.
+4. **League house rules** — admins (league owner) edit free-text rules at
+   `/leagues/[id]/rules`. Rules lock at `RULES_LOCK_AT` (end of Saturday
+   2026-04-25 ET). Public view for members is on the league detail page.
+5. **Trial period** — `SEASON_START_AT = 2026-04-25T00:00:00Z`. Guesses on games
+   tipping off before that don't award points (`src/lib/standings.ts` skips
+   them). Trial banner on landing / games / league pages.
+6. **Admin dashboard** at `/admin` guarded by `ADMIN_EMAILS` env var. Shows
+   total players, leagues, guesses, games synced, live/final counts, recent
+   signups + recent leagues.
+7. Every user is auto-enrolled in the Global League on first sign-in (see
    `src/auth.ts` `events.createUser` and `src/app/leagues/page.tsx`). Users
    can create private leagues and share invite codes (`/leagues/new`,
    `/leagues/join`).
-4. Picks can be edited until tipoff. The `POST /api/guesses` handler refuses
-   writes once `now >= game.tipoffAt` (`src/app/api/guesses/route.ts`).
-5. Other players' guesses are hidden until tipoff
-   (`src/app/api/games/[id]/guesses/route.ts` and game detail page).
-6. Scoring (regulation time) — `src/lib/scoring.ts` / `src/lib/rounds.ts`:
-   - 1st round: 1 / 2 / 5
-   - 2nd round: 2 / 4 / 10
-   - Conference Finals: 3 / 6 / 15
-   - NBA Finals: 4 / 8 / 20
-   Award is the highest tier reached (winner OR exact-diff OR exact-score).
-7. Monkey logic — `src/lib/monkey.ts`:
-   - `P(higher-seed wins) = 0.50 + 0.05 * seedGap + 0.04 * home-court`,
-     clamped to `[0.50, 0.85]`.
-   - Winner points ~ `N(112, 7)` clamped `[95, 135]`.
-   - Margin ~ `|N(8, 6)|` clamped `[1, 25]` → loser = winner − margin.
-   - Deterministic per-game (`rngSeed = gameId`) so the guess is stable.
-   - Generated at tipoff − 1 minute by `generateMonkeyGuesses()` in the cron
-     tick so the Monkey behaves like a regular player.
-8. The Monkey is a real `User` row (`id = "monkey"`, `isMonkey = true`) that
-   is auto-joined to every league — so it appears in standings exactly like a
-   human player.
-9. Guesses are stored per `(user, game)` and shared across **all** leagues the
-   user is in. Standings filter by league membership.
-10. Reinforced in UI + API: `api/games/[id]/guesses` returns `locked: true`
-    before tipoff; the game detail page hides the list until locked.
+8. Picks lock at tipoff; other players' picks hidden until then
+   (`src/app/api/guesses/route.ts`, `src/app/api/games/[id]/guesses/route.ts`).
+9. Scoring (regulation time) — `src/lib/scoring.ts` / `src/lib/rounds.ts`:
+   1/2/5 → 2/4/10 → 3/6/15 → 4/8/20 by round. Best single tier awarded.
+10. Monkey (`src/lib/monkey.ts`): deterministic Box-Muller, `P(higher seed) =
+    0.50 + 0.05·gap + 0.04·home`, winner ~ N(112,7), margin ~ |N(8,6)|.
+    Generated at tipoff − 1 min; Monkey is a real `User` auto-joined to every
+    league.
+11. Guesses stored per `(user, game)` — shared across all leagues.
 
 ## Live updates
 

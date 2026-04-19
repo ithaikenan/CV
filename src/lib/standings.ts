@@ -1,5 +1,6 @@
 import { prisma } from "./db";
 import { scoreGuess } from "./scoring";
+import { isTrialGame } from "./constants";
 
 export interface StandingRow {
   userId: string;
@@ -41,6 +42,8 @@ export async function computeStandings(leagueId: string): Promise<StandingRow[]>
 
   for (const g of guesses) {
     const game = g.game;
+    // Trial period (before SEASON_START_AT) — picks are free practice, no points.
+    if (isTrialGame(game.tipoffAt)) continue;
     if (game.status === "final") {
       const ah = game.homeRegScore ?? game.homeScore ?? 0;
       const aa = game.awayRegScore ?? game.awayScore ?? 0;
