@@ -1,7 +1,8 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
-import Facebook from "next-auth/providers/facebook";
+import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
+import bcrypt from "bcryptjs";
 import { prisma, GLOBAL_LEAGUE_ID } from "./lib/db";
 import { ensureCoreRows } from "./lib/sync";
 
@@ -15,16 +16,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       allowDangerousEmailAccountLinking: true,
     }),
-    Facebook({
-      clientId: process.env.FACEBOOK_CLIENT_ID,
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
-      allowDangerousEmailAccountLinking: true,
+    Credentials({
+      name: "Email & password",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(raw) {
+        const email = String(raw?.email ?? "").trim().toLowerCase();
+        const password = String(raw?.password ?? "");
+        if (!email || !password) return null;
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user?.passwordHash) return null;
+        const ok = await bcrypt.compare(password, user.passwordHash);
+        if (!ok) return null;
+        return { id: user.id, name: user.name, email: user.email, image: user.image };
+      },
     }),
   ],
-  // Database sessions with a 90-day cookie keep users signed in on the same
-  // device without re-auth. NextAuth refreshes the session cookie on each
-  // request, so active users never get logged out.
-  session: { strategy: "database", maxAge: NINETY_DAYS, updateAge: 60 * 60 * 24 },
+  // JWT is required for Credentials provider. Token persists 90 days in an
+  // httpOnly cookie so returning users on the same device stay signed in.
+  session: { strategy: "jwt", maxAge: NINETY_DAYS, updateAge: 60 * 60 * 24 },
   cookies: {
     sessionToken: {
       name:
@@ -42,7 +54,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   events: {
     async createUser({ user }) {
-      // Auto-enroll new user in the Global League.
       try {
         await ensureCoreRows();
         if (user.id) {
@@ -58,9 +69,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   callbacks: {
-    async session({ session, user }) {
-      if (session.user && user) {
-        (session.user as { id?: string }).id = user.id;
+    async jwt({ token, user }) {
+      if (user?.id) token.userId = user.id;
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user && token.userId) {
+        (session.user as { id?: string }).id = String(token.userId);
       }
       return session;
     },

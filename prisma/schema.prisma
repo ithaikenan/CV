@@ -21,6 +21,7 @@ model User {
   email         String?      @unique
   emailVerified DateTime?
   image         String?
+  passwordHash  String?
   isMonkey      Boolean      @default(false)
   createdAt     DateTime     @default(now())
 
@@ -68,14 +69,16 @@ model VerificationToken {
 // --- App ------------------------------------------------------------------
 
 model League {
-  id         String        @id @default(cuid())
-  name       String
-  isGlobal   Boolean       @default(false)
-  inviteCode String        @unique @default(cuid())
-  ownerId    String?
-  owner      User?         @relation("LeagueOwner", fields: [ownerId], references: [id])
-  createdAt  DateTime      @default(now())
-  memberships Membership[]
+  id              String        @id @default(cuid())
+  name            String
+  isGlobal        Boolean       @default(false)
+  inviteCode      String        @unique @default(cuid())
+  ownerId         String?
+  owner           User?         @relation("LeagueOwner", fields: [ownerId], references: [id])
+  rules           String?       // Admin-set "house rules" (markdown-lite, free text).
+  rulesUpdatedAt  DateTime?
+  createdAt       DateTime      @default(now())
+  memberships     Membership[]
 }
 
 model Membership {

@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { auth, signIn } from "@/auth";
+import { auth } from "@/auth";
+import { SEASON_START_AT } from "@/lib/constants";
 
 export default async function Home() {
   const session = await auth();
+  const trial = Date.now() < SEASON_START_AT.getTime();
   return (
     <div className="grid gap-10">
       <section className="card bg-gradient-to-br from-ink-800/80 to-ink-900/80 border-ink-700">
@@ -14,7 +16,8 @@ export default async function Home() {
             </h1>
             <p className="text-white/70 mt-2 max-w-2xl">
               Guess NBA playoff scores, climb the Global League, and start private leagues with your
-              friends. A monkey plays too — if you finish behind it, you&apos;ll hear about it.
+              friends. One blown pick doesn&apos;t knock you out — exact calls in later rounds can pull
+              you back into contention.
             </p>
           </div>
         </div>
@@ -23,40 +26,24 @@ export default async function Home() {
             <Link href="/leagues" className="btn btn-primary">Go to my leagues</Link>
           ) : (
             <>
-              <form
-                action={async () => {
-                  "use server";
-                  await signIn("google", { redirectTo: "/leagues" });
-                }}
-              >
-                <button className="btn btn-primary" type="submit">Sign up with Google</button>
-              </form>
-              <form
-                action={async () => {
-                  "use server";
-                  await signIn("facebook", { redirectTo: "/leagues" });
-                }}
-              >
-                <button className="btn btn-ghost" type="submit">Continue with Facebook</button>
-              </form>
+              <Link href="/signup" className="btn btn-primary">Create free account</Link>
+              <Link href="/signin" className="btn btn-ghost">Sign in</Link>
             </>
           )}
+          <Link href="/about" className="btn btn-ghost">How it works</Link>
         </div>
+        {trial && (
+          <div className="mt-5 rounded-xl border border-banana-500/40 bg-banana-500/10 px-4 py-3 text-sm text-banana-500">
+            <span className="font-bold">Trial period</span> — the first days of the playoffs are a warm-up.
+            Points officially start from the first game of Saturday.
+          </div>
+        )}
       </section>
 
       <section className="grid md:grid-cols-3 gap-4">
-        <Feature
-          title="Guess until tipoff"
-          body="Change your picks up to game time. At tipoff everything locks."
-        />
-        <Feature
-          title="Points by round"
-          body="1/2/5 in the first round, scaling to 4/8/20 in the Finals."
-        />
-        <Feature
-          title="The Monkey plays too"
-          body="Every league includes the Monkey. Its picks are based on seed + home court + a dash of randomness."
-        />
+        <Feature title="Always in the game" body="Every game is its own shot at points. A blown first-round pick can't knock you out — nail an exact Finals score and jump the pack." />
+        <Feature title="Points scale by round" body="1/2/5 in Round 1 climbing to 4/8/20 in the Finals (winner / exact diff / exact score)." />
+        <Feature title="The Monkey plays too" body="Every league includes a Monkey whose picks are a weighted seed+home-court coin flip. Don't finish behind it." />
       </section>
     </div>
   );
